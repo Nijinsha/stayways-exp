@@ -8,7 +8,7 @@ var express         = require('express'),
     plmongoose      = require('passport-local-mongoose'),
     routes          = require('./routes'),
     user            = require('./models/user'),
-    port            = 3000,
+    PORT            = process.env.PORT || 3000,
     ip              = "";
 
 
@@ -25,23 +25,34 @@ app.use(passport.session());
 passport.use(new localStrategy(user.authenticate()));
 passport.serializeUser(user.serializeUser());
 passport.deserializeUser(user.deserializeUser());
-app.use(express.static(path.join(__dirname, 'public')));
-app.set('view engine','ejs');
-//routes======================================================================================================================
-app.get('/',routes.home);                                            //home page
-app.post('/register', routes.register);
 
-//respones erro handling======================================================================================================
-app.use(function (req, res, next) {
-  res.status(404).send("Sorry can't find that!")
-})
-app.use(function (err, req, res, next) {
-  console.error(err.stack)
-  res.status(500).send('Something broke!')
-})
+// using webpack-dev-server and middleware in development environment
+if(process.env.NODE_ENV !== 'production') {
+  var webpackDevMiddleware = require('webpack-dev-middleware');
+  var webpackHotMiddleware = require('webpack-hot-middleware');
+  var webpack = require('webpack');
+  var config = require('./webpack.config');
+  var compiler = webpack(config);
+  
+  app.use(webpackDevMiddleware(compiler, { noInfo: true, publicPath: config.output.publicPath }));
+  app.use(webpackHotMiddleware(compiler));
+}
+
+app.use(express.static(path.join(__dirname, 'dist')));
+//routes======================================================================================================================
+
+app.get('/', function(request, response) {
+  response.sendFile(__dirname + '/dist/index.html')
+});
+
 
 // launch ====================================================================================================================
 
-app.listen(port,function(){
- console.log("The magic happens on port " + port);
+app.listen(PORT,function(err){
+   if (err) {
+    console.error(err);
+  } else {
+    console.log("The magic happens on port " + PORT);
+  }
+ 
 });

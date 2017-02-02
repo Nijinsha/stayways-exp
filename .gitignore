@@ -38,3 +38,6 @@ jspm_packages
 
 # visual studio code cache
 .vscode
+
+*npm-debug.log
+*.DS_Store
